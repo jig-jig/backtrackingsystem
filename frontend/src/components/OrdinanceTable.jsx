@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import LineageModal from './LineageModal';
+import AddOrdinanceModal from './AddOrdinanceModal';
 
 export default function OrdinanceTable() {
   // Data & State Management Filters
@@ -10,6 +11,8 @@ export default function OrdinanceTable() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedOrdinanceForModal, setSelectedOrdinanceForModal] = useState(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const userRole = localStorage.getItem('userRole') || 'Viewer';
   
   // Pagination State Variables
   const [page, setPage] = useState(1);
@@ -40,7 +43,8 @@ export default function OrdinanceTable() {
   }, []);
 
   // 2. Fetch Live Paginated Ordinances from API 
-  const fetchOrdinances = async () => {
+  // Memoize the fetch function using useCallback
+  const fetchOrdinances = useCallback(async () => {
     setIsLoading(true);
     setError('');
     try {
@@ -49,7 +53,7 @@ export default function OrdinanceTable() {
         headers: { Authorization: token },
         params: {
           page: page,
-          limit: 5, // Shows 5 items per page for a compact look
+          limit: 5,
           q: search,
           category: selectedCategory,
           status: selectedStatus
@@ -60,16 +64,21 @@ export default function OrdinanceTable() {
         setPaginationInfo(res.data.pagination);
       }
     } catch (err) {
-      setError('Could not retrieve ordinance repository data records.');
+      setError('Could not retrieve ordinance repository data records.', err);
     } finally {
       setIsLoading(false);
     }
-  };
+    // These are the internal state variables the fetch relies on
+  }, [page, search, selectedCategory, selectedStatus]);
 
-  // Trigger reload whenever parameters or page indexes adjust
+  // 2. This clean effect will now run smoothly without any cascading render warnings
   useEffect(() => {
-    fetchOrdinances();
-  }, [page, selectedCategory, selectedStatus]);
+    const loadOrdinances = async () => {
+      await fetchOrdinances();
+    };
+    loadOrdinances();
+  }, [fetchOrdinances]); // Safely watches the memoized function reference
+
 
   // Handle manual keyboard search execution to avoid overload
   const handleSearchSubmit = (e) => {
@@ -130,6 +139,16 @@ export default function OrdinanceTable() {
           <option value="Expired">Expired</option>
         </select>
       </form>
+      
+      {/* NEW ADD ORDINANCE BUTTON - Restricted to Administrators and Editors */}
+        {(userRole === 'Administrator' || userRole === 'Editor') && (
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-sm whitespace-nowrap transition duration-150 text-center"
+          >
+            ＋ Add Ordinance
+          </button>
+        )}
 
       {/* FEEDBACK LABELS */}
       {error && <div className="text-sm text-red-600 bg-red-50 p-3 border border-red-100 rounded-lg">{error}</div>}
@@ -231,7 +250,17 @@ export default function OrdinanceTable() {
             ordinanceNumber={selectedOrdinanceForModal.number}
             onClose={() => setSelectedOrdinanceForModal(null)}
             />
-        )}
+        )};
+
+        {/* NEW ORDINANCE REGISTRATION MODAL RENDERING GATEWAY */}
+        {isAddModalOpen && (
+          <AddOrdinanceModal
+            categories={categories}
+            onClose={() => setIsAddModalOpen(false)}
+            onRefresh={() => { fetchOrdinances(); setPage(1); }} // Instantly refreshes list upon completion
+          />
+        )};
+
       </div>
     </div>
   );
