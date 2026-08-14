@@ -9,6 +9,9 @@ const categoryRouter = require('./categories');
 const statsRouter = require('./stats');
 const app = express();
 const PORT = process.env.PORT || 5000;
+const http = require('http');
+const { initWebSocket } = require('./websocket');
+const server = http.createServer(app);
 
 // Middleware
 app.use(cors());

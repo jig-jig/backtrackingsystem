@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
+const { broadcastUpdate } = require('./websocket');
 const { authenticateToken, authorizeRoles } = require('./auth');
 require('dotenv').config();
 
@@ -61,6 +62,13 @@ router.post('/', authenticateToken, authorizeRoles('Administrator', 'Editor'), a
 
     await client.query('COMMIT');
     
+    // 🔥 TRIGGER REAL-TIME INTERNET NETWORK BROADCAST SIGNALS
+    // Tells all active frontend dashboards to update their cards and tables immediately
+    broadcastUpdate('ORDINANCE_REPOSITORY_CHANGED', {
+      message: 'New legislation logged into repository.',
+      number: ordinance_number
+    });
+
     res.status(201).json({ 
       success: true, 
       message: 'Ordinance logged and backtracking linkages synced successfully.',
@@ -227,6 +235,74 @@ router.get('/:id/lineage', authenticateToken, async (req, res) => {
     client.release();
   }
 });
+
+// UPGRADED PUT ROUTE WITH HISTORICAL RELATIONSHIP TRANSFERS
+router.put('/:id', authenticateToken, authorizeRoles('Administrator', 'Editor'), async (req, res) => {
+  const { id } = req.params;
+  const { 
+    ordinance_number, 
+    title, 
+    date_enacted, 
+    category_id, 
+    remarks, 
+    nas_file_path,
+    amends_ordinance_id, // The newly chosen old ordinance ID
+    new_status_for_old   // The new status for that old ordinance (Amended/Repealed)
+  } = req.body;
+
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+
+    // 1. Clear any old linkages where this ordinance was previously the successor
+    // This resets the old ordinance back to 'Active' before we map the new link
+    await client.query(`
+      UPDATE ordinances 
+      SET superseded_by_id = NULL, status = 'Active'::ordinance_status 
+      WHERE superseded_by_id = $1
+    `, [id]);
+
+    // 2. Update the primary metadata columns for the current ordinance
+    const updateQuery = `
+      UPDATE ordinances 
+      SET ordinance_number = $1, title = $2, date_enacted = $3, category_id = $4, 
+          remarks = $5, nas_file_path = $6, updated_at = NOW()
+      WHERE id = $7;
+    `;
+    await client.query(updateQuery, [
+      ordinance_number, title, date_enacted, parseInt(category_id), remarks, nas_file_path, id
+    ]);
+
+    // 3. If the editor specified an amendment link, establish the new relationship node
+    if (amends_ordinance_id) {
+      const updateOldQuery = `
+        UPDATE ordinances 
+        SET superseded_by_id = $1, status = $2::ordinance_status, updated_at = NOW()
+        WHERE id = $3;
+      `;
+      await client.query(updateOldQuery, [id, new_status_for_old || 'Amended', amends_ordinance_id]);
+    }
+
+    await client.query('COMMIT');
+
+    // Trigger real-time WebSocket broadcast sync signal
+    broadcastUpdate('ORDINANCE_REPOSITORY_CHANGED', { message: 'An ordinance link was corrected.', id });
+
+    res.json({ success: true, message: 'Ordinance record and historical linkages updated successfully.' });
+
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    if (err.code === '23505') {
+      return res.status(400).json({ success: false, message: `Ordinance number '${ordinance_number}' already exists.` });
+    }
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
 
 
 module.exports = router;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Register from './Register';
@@ -14,12 +14,12 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [metrics, setMetrics] = useState({ total: 0, amended: 0, repealed: 0 });
-  // Mock stats for dashboard tab overview card visuals
-  const stats = [
-    { name: 'Total Ordinances', count: '1,240', color: 'bg-blue-600' },
-    { name: 'Amended Records', count: '342', color: 'bg-amber-500' },
-    { name: 'Repealed Active Laws', count: '89', color: 'bg-red-500' }
-  ];
+  // // Mock stats for dashboard tab overview card visuals
+  // const stats = [
+  //   { name: 'Total Ordinances', count: '1,240', color: 'bg-blue-600' },
+  //   { name: 'Amended Records', count: '342', color: 'bg-amber-500' },
+  //   { name: 'Repealed Active Laws', count: '89', color: 'bg-red-500' }
+  // ];
 
     // 2. Memoized function to fetch live summary numbers from our API
   const fetchMetricsSummary = useCallback(async () => {

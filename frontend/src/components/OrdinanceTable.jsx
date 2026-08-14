@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import LineageModal from './LineageModal';
 import AddOrdinanceModal from './AddOrdinanceModal';
 
-export default function OrdinanceTable() {
+export default function OrdinanceTable(props) {
   // Data & State Management Filters
   const [ordinances, setOrdinances] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -12,6 +12,7 @@ export default function OrdinanceTable() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedOrdinanceForModal, setSelectedOrdinanceForModal] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [ordinanceToEdit, setOrdinanceToEdit] = useState(null);
   const userRole = localStorage.getItem('userRole') || 'Viewer';
   
   // Pagination State Variables
@@ -194,6 +195,8 @@ export default function OrdinanceTable() {
                   <th className="p-4">Title Description</th>
                   <th className="p-4">Date Enacted</th>
                   <th className="p-4">Status</th>
+                    {/* Inject action header column for editors */}
+                  {(userRole === 'Administrator' || userRole === 'Editor') && <th className="p-4 text-center">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -214,6 +217,19 @@ export default function OrdinanceTable() {
                         {ord.status}
                       </span>
                     </td>
+                    {(userRole === 'Administrator' || userRole === 'Editor') && (
+                      <td className="p-4">
+                        <button
+                          onClick={() => {
+                            setOrdinanceToEdit(ord);
+                            setIsAddModalOpen(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-sm whitespace-nowrap transition duration-150 text-center"
+                        >
+                          ✏️ Edit
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -252,14 +268,19 @@ export default function OrdinanceTable() {
             />
         )};
 
-        {/* NEW ORDINANCE REGISTRATION MODAL RENDERING GATEWAY */}
-        {isAddModalOpen && (
-          <AddOrdinanceModal
-            categories={categories}
-            onClose={() => setIsAddModalOpen(false)}
-            onRefresh={() => { fetchOrdinances(); setPage(1); }} // Instantly refreshes list upon completion
-          />
-        )};
+      {/* DUAL MODE FORM CONTROL MODAL MOUNT RE-CONFIGURED */}
+      {isAddModalOpen && (
+        <AddOrdinanceModal
+          categories={categories}
+          ordinanceToEdit={ordinanceToEdit} // Passes payload data to switch modal to edit mode
+          onClose={() => { setIsAddModalOpen(false); setOrdinanceToEdit(null); }} // Clears state on close
+          onRefresh={() => { 
+            fetchOrdinances(); 
+            setPage(1); 
+            if(props.onNewAddition) props.onNewAddition(); 
+          }} 
+        />
+      )}
 
       </div>
     </div>
