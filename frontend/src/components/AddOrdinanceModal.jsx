@@ -10,7 +10,7 @@ export default function AddOrdinanceModal({ categories, onClose, onRefresh }) {
   const [remarks, setRemarks] = useState('');
   const [nasFilePath, setNasFilePath] = useState('');
 
-  // Backtracking / Amending States 
+  // Backtracking / Amending States
   const [isAmending, setIsAmending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [allOrdinances, setAllOrdinances] = useState([]);
@@ -88,7 +88,7 @@ const filteredOrdinances = useMemo(() => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg my-auto border border-slate-200 flex flex-col max-h-[90vh]">
+      <div className="flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.25)]">
         
         {/* Modal Header */}
         <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">

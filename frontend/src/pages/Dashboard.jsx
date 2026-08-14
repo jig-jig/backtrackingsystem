@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Register from './Register';
 import OrdinanceTable from '../components/OrdinanceTable';
 import seal from '../assets/seal.png';
@@ -12,13 +13,40 @@ export default function Dashboard() {
   // Navigation & Responsiveness States
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
+  const [metrics, setMetrics] = useState({ total: 0, amended: 0, repealed: 0 });
   // Mock stats for dashboard tab overview card visuals
   const stats = [
     { name: 'Total Ordinances', count: '1,240', color: 'bg-blue-600' },
     { name: 'Amended Records', count: '342', color: 'bg-amber-500' },
     { name: 'Repealed Active Laws', count: '89', color: 'bg-red-500' }
   ];
+
+    // 2. Memoized function to fetch live summary numbers from our API
+  const fetchMetricsSummary = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:5000/api/stats/summary', {
+        headers: { Authorization: token }
+      });
+      if (res.data.success) {
+        setMetrics(res.data.counts);
+      }
+    } catch (err) {
+      console.error('Failed to sync dashboard metrics cards:', err);
+    }
+  }, []);
+
+  // 3. Initial load hook to load counts safely on viewport mounting phase
+  useEffect(() => {
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      if (isMounted) fetchMetricsSummary();
+    }, 0);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [fetchMetricsSummary]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -29,7 +57,15 @@ export default function Dashboard() {
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
     setIsSidebarOpen(false);
+    if (tabId === 'dashboard') fetchMetricsSummary(); // Refresh stats automatically when navigating back to the main dashboard
   };
+
+    // 4. Map metrics numbers directly into the layout card configs dynamically
+  const cardData = [
+    { name: 'Total Ordinances', count: metrics.total.toLocaleString(), color: 'bg-blue-600' },
+    { name: 'Amended Records', count: metrics.amended.toLocaleString(), color: 'bg-amber-500' },
+    { name: 'Repealed Ordinances', count: metrics.repealed.toLocaleString(), color: 'bg-red-500' }
+  ];
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 antialiased">
@@ -142,19 +178,18 @@ export default function Dashboard() {
                 </div>
               </header>
 
-              <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {stats.map((card, i) => (
-                  <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{card.name}</p>
-                        <h3 className="mt-2 text-3xl font-black tracking-[-0.05em] text-slate-900">{card.count}</h3>
-                      </div>
-                      <div className={`h-12 w-3 rounded-full ${card.color}`}></div>
+              {/* Live Metric Cards Row Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {cardData.map((card, i) => (
+                  <div key={i} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{card.name}</p>
+                      <h3 className="text-2xl font-extrabold text-slate-900 mt-1">{card.count}</h3>
                     </div>
+                    <div className={`w-3 h-10 rounded-full ${card.color}`}></div>
                   </div>
                 ))}
-              </section>
+              </div>
 
               <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
                 <div className="mb-4 flex items-center justify-between gap-4">

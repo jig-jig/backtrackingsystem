@@ -46,7 +46,7 @@ export default function CategorySettings() {
 
     const dismissTimer = setTimeout(() => {
       setNotification({ message: '', isError: false });
-    }, 10000); // 10,000 milliseconds = 10 seconds
+    }, 2000); // 2,000 milliseconds = 2 seconds
 
     return () => clearTimeout(dismissTimer);
   }, [notification.message]);
@@ -104,7 +104,7 @@ export default function CategorySettings() {
         <h3 className="font-bold text-slate-900 text-base mb-1">Create New Category</h3>
         <p className="text-xs text-slate-400 mb-4">Input custom legislative tags to expand dropdown selectors dynamically.</p>
 
-        {/* Dynamic Notification Banner Alert (Self-dismisses after 10s) */}
+        {/* Dynamic Notification Banner Alert (Self-dismisses after 2s) */}
         {notification.message && (
           <div className={`p-3 rounded-lg border text-xs font-semibold mb-4 animate-in fade-in duration-150 ${
             notification.isError 

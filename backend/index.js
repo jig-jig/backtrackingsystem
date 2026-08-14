@@ -6,6 +6,7 @@ require('dotenv').config();
 const { router: authRouter, authenticateToken, authorizeRoles } = require('./auth');
 const ordinanceRouter = require('./ordinances');
 const categoryRouter = require('./categories');
+const statsRouter = require('./stats');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use('/api/ordinances', ordinanceRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/categories', categoryRouter);
+app.use('/api/stats', statsRouter);
 
 // PostgreSQL Connection Pool
 const pool = new Pool({
