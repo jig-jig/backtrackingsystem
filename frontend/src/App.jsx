@@ -1,34 +1,34 @@
-import React from 'react';
+// import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import SessionTimeoutGuard from './components/SessionTimeoutGuard';
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Public Access Entry Routing Points */}
-        <Route path="/login" element={<Login />} />
-        
-        {/* Core Dashboard Protected Route */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
+      {/* 🛡️ Guard checks every page under this branch layout tree layer */}
+      <SessionTimeoutGuard timeoutMins={15}> 
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
 
-        {/* Staff Provision Access Route - Restricted to Administrators Only */}
-        <Route path="/register" element={
-          <ProtectedRoute allowedRoles={['Administrator']}>
-            <Register />
-          </ProtectedRoute>
-        } />
+          <Route path="/register" element={
+            <ProtectedRoute allowedRoles={['Administrator']}>
+              <Register />
+            </ProtectedRoute>
+          } />
 
-        {/* Default Fallback Redirect Route Catching Handler */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </SessionTimeoutGuard>
     </BrowserRouter>
   );
 }

@@ -84,6 +84,13 @@ export default function LineageModal({ ordinanceId, ordinanceNumber, onClose }) 
                     </div>
                     <h4 className="mt-2 text-sm font-semibold leading-relaxed text-slate-700">{item.current_version_title}</h4>
 
+                    {item.current_version_remarks && (
+                      <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">Remarks</p>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-700">{item.current_version_remarks}</p>
+                      </div>
+                    )}
+
                     {item.next_amending_number && (
                       <div className="mt-3 border-t border-dashed border-slate-200 pt-2 text-[11px] font-medium text-slate-500">
                         <span className="mr-1">➡️</span>

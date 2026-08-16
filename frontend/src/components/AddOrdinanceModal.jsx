@@ -345,8 +345,8 @@ export default function AddOrdinanceModal({
               {isLoading
                 ? "Saving Changes..."
                 : isEditMode
-                  ? "Save Modifications"
-                  : "Commit Legislation Entry"}
+                  ? "Update Legislation Entry"
+                  : "Save Legislation Entry"}
             </button>
           </div>
         </form>

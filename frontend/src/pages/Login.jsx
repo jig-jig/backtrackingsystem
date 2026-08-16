@@ -1,26 +1,39 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import seal from '../assets/seal.png';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import seal from "../assets/seal.png";
 
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
+    setIsLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { username, password });
+      const res = await axios.post("http://localhost:5000/api/auth/login", {
+        username,
+        password,
+      });
+
       if (res.data.success) {
-        localStorage.setItem('token', res.data.token);
-        localStorage.setItem('userRole', res.data.user.role);
-        navigate('/dashboard');
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem(
+          "userRole",
+          res.data.user?.role || res.data.role || "Viewer",
+        );
+        localStorage.setItem("username", res.data.user?.username || username);
+        navigate("/dashboard");
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid username or password.');
+      setIsLoading(false); // 2. Turn off the loading state layer on error so they can edit fields
+      setError(
+        err.response?.data?.message || "Authentication transaction faulted.",
+      );
     }
   };
 
@@ -39,7 +52,9 @@ export default function Login() {
             Backtracking System
           </h1>
           <p className="mt-4 max-w-md text-sm text-blue-50/85 sm:text-base">
-            A system that tracks enacted legislation, audits, and traces the complete history of local legislation from its current state back to its original introduction.
+            A system that tracks enacted legislation, audits, and traces the
+            complete history of local legislation from its current state back to
+            its original introduction.
           </p>
         </div>
 
@@ -48,7 +63,9 @@ export default function Login() {
             <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
               Welcome back
             </p>
-            <h2 className="text-3xl font-black tracking-[-0.05em] text-slate-900">Sign in</h2>
+            <h2 className="text-3xl font-black tracking-[-0.05em] text-slate-900">
+              Sign in
+            </h2>
           </div>
 
           {error && (
@@ -59,37 +76,48 @@ export default function Login() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <label htmlFor="username" className="block text-sm font-semibold text-slate-700">
+              <label
+                htmlFor="username"
+                className="block text-sm font-semibold text-slate-700"
+              >
                 Username
               </label>
               <input
                 id="username"
                 type="text"
                 required
+                disabled={isLoading}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your username"
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50"
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3">
-                <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-semibold text-slate-700"
+                >
                   Password
                 </label>
-                <button type="button" className="text-sm font-semibold text-blue-700 transition hover:text-blue-800">
+                {/* <button
+                  type="button"
+                  className="text-sm font-semibold text-blue-700 transition hover:text-blue-800"
+                >
                   Forgot?
-                </button>
+                </button> */}
               </div>
               <input
                 id="password"
                 type="password"
                 required
                 value={password}
+                disabled={isLoading}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50"
               />
             </div>
 
@@ -102,11 +130,21 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition duration-200 hover:translate-y-[-1px] hover:shadow-xl hover:shadow-blue-500/30"
+              disabled={isLoading}
+              className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition duration-200 hover:translate-y-[-1px] hover:shadow-xl hover:shadow-blue-500/30 text-xs tracking-wide uppercase disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
-              Log In
+              {isLoading ? "Verifying Cipher..." : "Login"}
             </button>
           </form>
+          {/* ⏳ NON-CLICKABLE GLASS OVERLAY TIMEOUT BLOCK */}
+          {isLoading && (
+            <div className="absolute inset-0 z-50 bg-white/70 backdrop-blur-xs flex flex-col items-center justify-center pointer-events-auto cursor-wait animate-in fade-in duration-100">
+              <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <p className="text-xs font-bold text-slate-700 tracking-wide mt-3 uppercase animate-pulse">
+                Logging in...
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

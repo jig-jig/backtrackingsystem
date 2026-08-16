@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 export default function CategorySettings() {
@@ -102,7 +102,7 @@ export default function CategorySettings() {
       {/* LEFT COLUMN: MANAGEMENT ENTRY CARD BLOCK */}
       <div className="md:col-span-1 bg-white p-5 rounded-xl border border-slate-200 shadow-xs h-fit">
         <h3 className="font-bold text-slate-900 text-base mb-1">Create New Category</h3>
-        <p className="text-xs text-slate-400 mb-4">Input custom legislative tags to expand dropdown selectors dynamically.</p>
+        <p className="text-xs text-slate-400 mb-4">Input custom legislative tags.</p>
 
         {/* Dynamic Notification Banner Alert (Self-dismisses after 2s) */}
         {notification.message && (
@@ -126,7 +126,7 @@ export default function CategorySettings() {
 
         <form onSubmit={handleCreateCategory} className="space-y-3">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Category Phrasing Title</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Category Title</label>
             <input
               type="text"
               required
@@ -142,7 +142,7 @@ export default function CategorySettings() {
             disabled={isLoading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 rounded-lg shadow-sm transition disabled:bg-blue-400"
           >
-            {isLoading ? 'Processing Pipeline...' : 'Add Config Category'}
+            {isLoading ? 'Processing Pipeline...' : 'Add Category'}
           </button>
         </form>
       </div>
@@ -150,8 +150,8 @@ export default function CategorySettings() {
       {/* RIGHT COLUMN: ACTIVE OPTIONS REPOSITORY MATRIX LIST */}
       <div className="md:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col">
         <div className="mb-4">
-          <h3 className="font-bold text-slate-900 text-base mb-1">Active Categories Directory</h3>
-          <p className="text-xs text-slate-400">Master database table index breakdown mapping choices.</p>
+          <h3 className="font-bold text-slate-900 text-base mb-1">Categories</h3>
+          <p className="text-xs text-slate-400">Lists of currently active categories.</p>
         </div>
 
         {categories.length === 0 ? (

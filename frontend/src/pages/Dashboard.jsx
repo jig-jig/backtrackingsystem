@@ -5,21 +5,21 @@ import Register from './Register';
 import OrdinanceTable from '../components/OrdinanceTable';
 import seal from '../assets/seal.png';
 import CategorySettings from '../components/CategorySettings';
+import UserAccountModal from '../components/UserAccountModal';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const userRole = localStorage.getItem('userRole') || 'Viewer';
+  const storedRole = localStorage.getItem('userRole');
+  const [userRole] = useState(storedRole || 'Viewer');
+  const [currentUsername, setCurrentUsername] = useState(localStorage.getItem('username') || 'Administrator');
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   
   // Navigation & Responsiveness States
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [metrics, setMetrics] = useState({ total: 0, amended: 0, repealed: 0 });
-  // // Mock stats for dashboard tab overview card visuals
-  // const stats = [
-  //   { name: 'Total Ordinances', count: '1,240', color: 'bg-blue-600' },
-  //   { name: 'Amended Records', count: '342', color: 'bg-amber-500' },
-  //   { name: 'Repealed Active Laws', count: '89', color: 'bg-red-500' }
-  // ];
+  const [profileToast, setProfileToast] = useState('');
 
     // 2. Memoized function to fetch live summary numbers from our API
   const fetchMetricsSummary = useCallback(async () => {
@@ -48,9 +48,35 @@ export default function Dashboard() {
     };
   }, [fetchMetricsSummary]);
 
+  useEffect(() => {
+    if (!profileToast) return;
+
+    const timeout = setTimeout(() => setProfileToast(''), 2600);
+    return () => clearTimeout(timeout);
+  }, [profileToast]);
+
   const handleLogout = () => {
-    localStorage.clear();
+    const rememberMe = localStorage.getItem('rememberMe') === 'true';
+    const rememberedUsername = localStorage.getItem('rememberedUsername');
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
+
+    if (rememberMe && rememberedUsername) {
+      localStorage.setItem('rememberMe', 'true');
+      localStorage.setItem('rememberedUsername', rememberedUsername);
+    }
+
     navigate('/login');
+  };
+
+  const handleProfileUpdated = (updatedUser) => {
+    if (updatedUser?.username) {
+      setCurrentUsername(updatedUser.username);
+      localStorage.setItem('username', updatedUser.username);
+      setProfileToast('Profile updated successfully.');
+    }
   };
 
   // Close sidebar automatically when switching tabs on mobile viewports
@@ -58,6 +84,15 @@ export default function Dashboard() {
     setActiveTab(tabId);
     setIsSidebarOpen(false);
     if (tabId === 'dashboard') fetchMetricsSummary(); // Refresh stats automatically when navigating back to the main dashboard
+  };
+
+  const toggleSidebar = () => {
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen((prev) => !prev);
+      return;
+    }
+
+    setIsSidebarCollapsed((prev) => !prev);
   };
 
     // 4. Map metrics numbers directly into the layout card configs dynamically
@@ -70,96 +105,132 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 antialiased">
       <div className="flex min-h-screen">
-        <div className="md:hidden fixed inset-x-0 top-0 z-40 h-16 border-b border-slate-200 bg-white/90 px-4 shadow-sm backdrop-blur-sm">
-          <div className="mx-auto flex h-full max-w-7xl items-center justify-between">
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-lg text-slate-700 transition hover:bg-slate-100"
-              aria-label="Toggle sidebar"
-            >
-              {isSidebarOpen ? '✕' : '☰'}
-            </button>
-            <div className="flex items-center gap-2">
-              <span className="text-base font-black tracking-[0.12em] text-slate-900 uppercase">Backtrack</span>
-            </div>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">
-              {userRole}
-            </span>
+        {profileToast && (
+          <div className="fixed right-4 top-4 z-[60] rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 shadow-lg shadow-emerald-500/10">
+            ✓ {profileToast}
           </div>
-        </div>
+        )}
 
         <aside
           className={`
-            fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200 bg-white text-slate-700 shadow-xl transition duration-200 ease-in-out
+            fixed inset-y-0 left-0 z-50 flex flex-col justify-between border-r border-slate-200 bg-white text-slate-700 shadow-xl transition-all duration-200 ease-in-out
             md:static md:translate-x-0
+            ${isSidebarCollapsed ? 'w-20 md:w-20' : 'w-72 md:w-72'}
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            ${!isSidebarOpen && window.innerWidth >= 768 ? 'translate-x-0' : ''}
           `}
         >
           <div>
-            <div className="flex h-20 items-center justify-between border-b border-slate-200 px-5">
-              <div className="flex items-center gap-3">
+            <div className="flex h-20 items-center justify-between border-b border-slate-200 px-3">
+              <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'justify-center w-full' : ''}`}>
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-lg shadow-lg shadow-blue-500/30">
                   <img src={seal} alt="Seal" className="h-full w-full object-cover" />
                 </div>
-                <div>
-                  <div className="text-sm font-black uppercase tracking-[0.14em] text-slate-900">Backtracking</div>
-                  <div className="text-[12px] font-semibold text-slate-500">System</div>
-                </div>
+                {!isSidebarCollapsed && (
+                  <div>
+                    <div className="text-sm font-black uppercase tracking-[0.14em] text-slate-900">Backtracking</div>
+                    <div className="text-[12px] font-semibold text-slate-500">System</div>
+                  </div>
+                )}
               </div>
+              <button
+                onClick={toggleSidebar}
+                className="hidden rounded-lg px-2 py-1 text-slate-700 hover:text-slate-900 md:inline-flex"
+                aria-label="Collapse sidebar"
+              >
+                {isSidebarCollapsed ? '→' : '←'}
+              </button>
               <button onClick={() => setIsSidebarOpen(false)} className="rounded-lg px-2 py-1 text-slate-700 hover:text-slate-900 md:hidden">
                 ✕
               </button>
             </div>
 
-            <nav className="space-y-2 p-4">
+            <nav className={`space-y-2 p-4 ${isSidebarCollapsed ? 'px-2' : ''}`}>
               <button
                 onClick={() => handleTabClick('dashboard')}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}`}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'} ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}
               >
-                <span>📊</span>
-                Dashboard
+                <span className="text-base">📊</span>
+                {!isSidebarCollapsed && 'Dashboard'}
               </button>
               <button
                 onClick={() => handleTabClick('categories')}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${activeTab === 'categories' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}`}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${activeTab === 'categories' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'} ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}
               >
-                <span>⚙️</span>
-                Settings / Categories
+                <span className="text-base">⚙️</span>
+                {!isSidebarCollapsed && 'Settings / Categories'}
               </button>
 
               {userRole === 'Administrator' && (
                 <div className="mt-4 border-t border-slate-200 pt-4">
-                  <span className="mb-2 block px-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600">
-                    Management Controls
-                  </span>
+                  {!isSidebarCollapsed && (
+                    <span className="mb-2 block px-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600">
+                      Management Controls
+                    </span>
+                  )}
                   <button
                     onClick={() => handleTabClick('accounts')}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${activeTab === 'accounts' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}`}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${activeTab === 'accounts' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'} ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}
                   >
-                    <span>👤</span>
-                    Account Registration
+                    <span className="text-base">👤</span>
+                    {!isSidebarCollapsed && 'Account Registration'}
                   </button>
                 </div>
               )}
             </nav>
           </div>
 
-          <div className="border-t border-slate-200 bg-slate-50 p-4">
-            <div className="mb-3 flex items-center gap-3 rounded-xl bg-white p-2.5 border border-slate-200">
+          <div className={`border-t border-slate-200 bg-slate-50 p-4 ${isSidebarCollapsed ? 'px-2' : ''}`}>
+            <div className={`mb-3 flex items-center gap-3 rounded-xl bg-white p-2.5 border border-slate-200 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-sm font-bold text-white">
-                A
+                {currentUsername?.charAt(0)?.toUpperCase() || 'A'}
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-slate-900">Administrator Account</p>
-                <p className="text-[10px] capitalize text-slate-600">{userRole.toLowerCase()}</p>
-              </div>
+              {!isSidebarCollapsed && (
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold text-slate-900">{currentUsername || 'Administrator Account'}</p>
+                  <p className="text-[10px] capitalize text-slate-600">{userRole.toLowerCase()}</p>
+                </div>
+              )}
             </div>
-            <button
-              onClick={handleLogout}
-              className="w-full rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-red-600 hover:text-white"
-            >
-              Sign Out
-            </button>
+
+            {!isSidebarCollapsed && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="mb-2 w-full bg-slate-100 rounded-xl px-3 py-2.5 font-bold uppercase tracking-[0.12em] text-black transition hover:bg-blue-700 hover:text-white"
+                >
+                  Update Account
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-red-600 hover:text-white"
+                >
+                  Sign Out
+                </button>
+              </>
+            )}
+
+            {isSidebarCollapsed && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-base text-white transition hover:bg-blue-700"
+                  aria-label="Update account"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-base text-slate-700 transition hover:bg-red-600 hover:text-white"
+                  aria-label="Sign out"
+                >
+                  ↩
+                </button>
+              </div>
+            )}
           </div>
         </aside>
 
@@ -194,8 +265,8 @@ export default function Dashboard() {
               <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
                 <div className="mb-4 flex items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-lg font-black tracking-[-0.04em] text-slate-900">Ordinance Tracking Vault</h2>
-                    <p className="text-sm text-slate-500">Master directory of active and historical records</p>
+                    <h2 className="text-lg font-black tracking-[-0.04em] text-slate-900">Ordinance Tracking Table</h2>
+                    <p className="text-sm text-slate-500">View and manage all ordinance records in real-time</p>
                   </div>
                   <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-blue-700">
                     Live data
@@ -219,7 +290,7 @@ export default function Dashboard() {
               {/* Dynamic Action Panel Title Headers */}
               <div>
                 <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">System Settings Profile</h1>
-                <p className="text-xs md:text-sm text-slate-500">Tailor parameters, custom selections, and lookup categories dynamically.</p>
+                <p className="text-xs md:text-sm text-slate-500">Add and manage system categories.</p>
               </div>
 
               {/* Mounted Live Dynamic CRUD Category Component */}
@@ -236,6 +307,13 @@ export default function Dashboard() {
           className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-[2px] md:hidden"
         />
       )}
+
+      <UserAccountModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        currentUsername={currentUsername}
+        onProfileUpdated={handleProfileUpdated}
+      />
     </div>
   );
 }

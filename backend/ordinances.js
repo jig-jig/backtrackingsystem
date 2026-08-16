@@ -186,11 +186,11 @@ router.get('/:id/lineage', authenticateToken, async (req, res) => {
   // The recursive query with all comments and white spaces removed to avoid windows compiler conflicts
   const query = `
     WITH RECURSIVE ordinance_lineage AS (
-        SELECT id, ordinance_number, title, status, superseded_by_id, 1 AS generation_level
+        SELECT id, ordinance_number, title, status, remarks, superseded_by_id, 1 AS generation_level
         FROM ordinances
         WHERE id = $1
         UNION ALL
-        SELECT o.id, o.ordinance_number, o.title, o.status, o.superseded_by_id, ol.generation_level + 1
+        SELECT o.id, o.ordinance_number, o.title, o.status, o.remarks, o.superseded_by_id, ol.generation_level + 1
         FROM ordinances o
         JOIN ordinance_lineage ol ON o.id = ol.superseded_by_id
     )
@@ -200,6 +200,7 @@ router.get('/:id/lineage', authenticateToken, async (req, res) => {
         ol.ordinance_number AS current_version_number,
         ol.title AS current_version_title,
         ol.status AS current_version_status,
+        ol.remarks AS current_version_remarks,
         next_v.ordinance_number AS next_amending_number,
         next_v.title AS next_amending_title
     FROM ordinance_lineage ol

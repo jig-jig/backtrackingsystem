@@ -52,7 +52,7 @@ export default function Register() {
         {/* Header Section */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div class="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br shadow-lg shadow-blue-500/20">
+            <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br shadow-lg shadow-blue-500/20">
               <span className="text-2xl">👤</span>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function Register() {
                 Processing Entry...
               </span>
             ) : (
-              '✓ Provision Account'
+              'Register Account'
             )}
           </button>
 
