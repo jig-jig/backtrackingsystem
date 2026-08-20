@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import seal from "../assets/seal.png";
+import seal from "../assets/logo_here.svg";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(
+    () => localStorage.getItem("rememberedUsername") || "",
+  );
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(
+    () => localStorage.getItem("rememberMe") === "true",
+  );
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -27,6 +32,18 @@ export default function Login() {
           res.data.user?.role || res.data.role || "Viewer",
         );
         localStorage.setItem("username", res.data.user?.username || username);
+
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+          localStorage.setItem(
+            "rememberedUsername",
+            res.data.user?.username || username,
+          );
+        } else {
+          localStorage.removeItem("rememberMe");
+          localStorage.removeItem("rememberedUsername");
+        }
+
         navigate("/dashboard");
       }
     } catch (err) {
@@ -46,7 +63,7 @@ export default function Login() {
           </div>
 
           <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-100/90">
-            Sangguniang Bayan of San Francisco, Agusan del Sur
+            LGU NAME
           </p>
           <h1 className="text-3xl font-black leading-tight tracking-[-0.06em] sm:text-4xl md:text-5xl">
             Backtracking System
@@ -123,7 +140,13 @@ export default function Login() {
 
             <div className="flex items-center justify-start">
               <label className="inline-flex items-center gap-2 text-sm text-slate-600">
-                <input type="checkbox" className="h-4 w-4 accent-blue-600" />
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={isLoading}
+                  className="h-4 w-4 accent-blue-600"
+                />
                 <span>Remember me</span>
               </label>
             </div>

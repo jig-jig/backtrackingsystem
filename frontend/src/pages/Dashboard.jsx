@@ -17,9 +17,23 @@ export default function Dashboard() {
   // Navigation & Responsiveness States
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches);
   const [metrics, setMetrics] = useState({ total: 0, amended: 0, repealed: 0 });
   const [profileToast, setProfileToast] = useState('');
+  const isSidebarCollapsed = !isMobile && !isSidebarHovered;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const handleViewportChange = (event) => {
+      setIsMobile(event.matches);
+      setIsSidebarOpen(false);
+      setIsSidebarHovered(false);
+    };
+
+    mediaQuery.addEventListener('change', handleViewportChange);
+    return () => mediaQuery.removeEventListener('change', handleViewportChange);
+  }, []);
 
     // 2. Memoized function to fetch live summary numbers from our API
   const fetchMetricsSummary = useCallback(async () => {
@@ -86,15 +100,6 @@ export default function Dashboard() {
     if (tabId === 'dashboard') fetchMetricsSummary(); // Refresh stats automatically when navigating back to the main dashboard
   };
 
-  const toggleSidebar = () => {
-    if (window.innerWidth < 768) {
-      setIsSidebarOpen((prev) => !prev);
-      return;
-    }
-
-    setIsSidebarCollapsed((prev) => !prev);
-  };
-
     // 4. Map metrics numbers directly into the layout card configs dynamically
   const cardData = [
     { name: 'Total Ordinances', count: metrics.total.toLocaleString(), color: 'bg-blue-600' },
@@ -112,12 +117,13 @@ export default function Dashboard() {
         )}
 
         <aside
+          onMouseEnter={() => !isMobile && setIsSidebarHovered(true)}
+          onMouseLeave={() => !isMobile && setIsSidebarHovered(false)}
           className={`
             fixed inset-y-0 left-0 z-50 flex flex-col justify-between border-r border-slate-200 bg-white text-slate-700 shadow-xl transition-all duration-200 ease-in-out
             md:static md:translate-x-0
-            ${isSidebarCollapsed ? 'w-20 md:w-20' : 'w-72 md:w-72'}
+            ${isSidebarCollapsed ? 'w-72 md:w-20' : 'w-72'}
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-            ${!isSidebarOpen && window.innerWidth >= 768 ? 'translate-x-0' : ''}
           `}
         >
           <div>
@@ -133,13 +139,6 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
-              <button
-                onClick={toggleSidebar}
-                className="hidden rounded-lg px-2 py-1 text-slate-700 hover:text-slate-900 md:inline-flex"
-                aria-label="Collapse sidebar"
-              >
-                {isSidebarCollapsed ? '→' : '←'}
-              </button>
               <button onClick={() => setIsSidebarOpen(false)} className="rounded-lg px-2 py-1 text-slate-700 hover:text-slate-900 md:hidden">
                 ✕
               </button>
@@ -234,6 +233,15 @@ export default function Dashboard() {
           </div>
         </aside>
 
+        <button
+          type="button"
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed left-4 top-4 z-30 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-lg text-slate-700 shadow-md ring-1 ring-slate-200 md:hidden"
+          aria-label="Open navigation menu"
+        >
+          ☰
+        </button>
+
         <main className="flex-1 px-4 pb-8 pt-20 md:px-6 md:pb-8 md:pt-6">
           {activeTab === 'dashboard' && (
             <div className="mx-auto max-w-7xl space-y-6">
@@ -243,9 +251,9 @@ export default function Dashboard() {
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-600">Ordinance tracking</p>
                     <h1 className="text-2xl font-black tracking-[-0.06em] md:text-3xl text-slate-900">System Overview</h1>
                   </div>
-                  <button className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                  {/* <button className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
                     Export Report
-                  </button>
+                  </button> */}
                 </div>
               </header>
 
