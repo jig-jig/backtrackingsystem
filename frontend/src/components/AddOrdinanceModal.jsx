@@ -60,7 +60,7 @@ export default function AddOrdinanceModal({
     const loadLookupOptions = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/ordinances", {
+        const res = await axios.get("/api/ordinances", {
           headers: { Authorization: token },
           params: { limit: 200 },
         });
@@ -103,11 +103,11 @@ export default function AddOrdinanceModal({
       const token = localStorage.getItem("token");
       const response = isEditMode
         ? await axios.put(
-            `http://localhost:5000/api/ordinances/${ordinanceToEdit.id}`,
+            `/api/ordinances/${ordinanceToEdit.id}`,
             payload,
             { headers: { Authorization: token } },
           )
-        : await axios.post("http://localhost:5000/api/ordinances", payload, {
+        : await axios.post("/api/ordinances", payload, {
             headers: { Authorization: token },
           });
 

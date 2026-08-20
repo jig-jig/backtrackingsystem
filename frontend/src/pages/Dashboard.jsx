@@ -39,7 +39,7 @@ export default function Dashboard() {
   const fetchMetricsSummary = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/stats/summary', {
+      const res = await axios.get('/api/stats/summary', {
         headers: { Authorization: token }
       });
       if (res.data.success) {
@@ -317,6 +317,7 @@ export default function Dashboard() {
       )}
 
       <UserAccountModal
+        key={`${isProfileModalOpen}-${currentUsername}`}
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         currentUsername={currentUsername}

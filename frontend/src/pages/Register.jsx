@@ -24,7 +24,7 @@ export default function Register() {
       const token = localStorage.getItem('token');
       
       const response = await axios.post(
-        'http://localhost:5000/api/auth/register',
+        '/api/auth/register',
         { username, password, role },
         { headers: { Authorization: token } } // Passes the JWT token for Admin verification
       );

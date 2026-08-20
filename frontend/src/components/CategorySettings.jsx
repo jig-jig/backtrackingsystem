@@ -13,7 +13,7 @@ export default function CategorySettings() {
   const fetchCategories = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/categories', {
+      const res = await axios.get('/api/categories', {
         headers: { Authorization: token }
       });
       if (res.data.success) {
@@ -62,7 +62,7 @@ export default function CategorySettings() {
     try {
       const token = localStorage.getItem('token');
       const res = await axios.post(
-        'http://localhost:5000/api/categories',
+        '/api/categories',
         { name: newCategoryName.trim() },
         { headers: { Authorization: token } }
       );

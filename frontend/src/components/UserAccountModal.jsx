@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 
 export default function UserAccountModal({ isOpen, onClose, currentUsername, onProfileUpdated }) {
@@ -8,10 +8,6 @@ export default function UserAccountModal({ isOpen, onClose, currentUsername, onP
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    setUsername(currentUsername || '');
-  }, [currentUsername, isOpen]);
 
   if (!isOpen) return null;
 
@@ -45,7 +41,7 @@ export default function UserAccountModal({ isOpen, onClose, currentUsername, onP
       }
 
       const response = await axios.put(
-        'http://localhost:5000/api/auth/me',
+        '/api/auth/me',
         payload,
         { headers: { Authorization: token } }
       );

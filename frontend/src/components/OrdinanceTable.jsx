@@ -33,7 +33,7 @@ export default function OrdinanceTable(props) {
     const fetchCategories = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/categories", {
+        const res = await axios.get("/api/categories", {
           headers: { Authorization: token },
         });
         if (res.data.success) setCategories(res.data.categories);
@@ -51,7 +51,7 @@ export default function OrdinanceTable(props) {
     setError("");
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/ordinances", {
+      const res = await axios.get("/api/ordinances", {
         headers: { Authorization: token },
         params: {
           page: page,

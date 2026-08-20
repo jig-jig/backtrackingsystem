@@ -49,6 +49,8 @@ app.get('/api/admin-dashboard', authenticateToken, authorizeRoles('Administrator
   res.json({ message: `Welcome ${req.user.username}! You have accessed management space.` });
 });
 
-app.listen(PORT, () => {
+initWebSocket(server);
+
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });

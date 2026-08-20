@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 export default function LineageModal({ ordinanceId, ordinanceNumber, onClose }) {
@@ -13,14 +13,14 @@ export default function LineageModal({ ordinanceId, ordinanceNumber, onClose }) 
       setError('');
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get(`http://localhost:5000/api/ordinances/${ordinanceId}/lineage`, {
+        const res = await axios.get(`/api/ordinances/${ordinanceId}/lineage`, {
           headers: { Authorization: token }
         });
         if (res.data.success) {
           setLineage(res.data.lineage);
         }
       } catch (err) {
-        setError('Failed to construct the historical evolutionary path for this record.');
+        setError('Failed to construct the historical evolutionary path for this record.', err);
       } finally {
         setIsLoading(false);
       }
